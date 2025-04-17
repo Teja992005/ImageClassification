@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Classification</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Image Classifier</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+      <input type="file" id="file-input" accept="image/*" required />
+      <button type="submit">Upload</button>
+    </form>
+
+    <div id="preview-container">
+      <img id="preview" src="" alt="Preview will appear here" />
+    </div>
+
+    <h2>Predicted Class: <span id="result">undefined</span></h2>
+  </div>
+
+  <script>
+    const form = document.getElementById("upload-form");
+    const preview = document.getElementById("preview");
+    const fileInput = document.getElementById("file-input");
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+      }
+    });
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select an image first!");
+        return;
+      }
+
+      formData.append("file", file);
+      document.getElementById("result").textContent = "🔄 Predicting...";
+
+      fetch("http://127.0.0.1:5000/predict", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.class) {
+          document.getElementById("result").textContent = `✅ ${data.class} (${(data.confidence * 100).toFixed(2)}%)`;
+        } else {
+          document.getElementById("result").textContent = "❌ Error: " + (data.error || "Unknown error");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        document.getElementById("result").textContent = "❌ Failed to connect.";
+      });
+    });
+  </script>
+</body>
+</html>
